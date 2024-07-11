@@ -10,7 +10,7 @@ The rapid development of the Large Language Model (LLM) presents huge opportunit
 ![img](SC.png)
 
 ## The function of each file
-- [LLangchain.ipynb](LLangchain.ipynb): The implementation of LLM-enhanced multi-agent systems for the generation of semantic communication systems.
+- [LLMMAS.ipynb](LLMMAS.ipynb): The implementation of LLM-enhanced multi-agent systems for the generation of semantic communication systems.
 
 - [Test_generated_SC.py](Test_generated_SC.py): Test the generated SC model based on cosine similarity.
 
