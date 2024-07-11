@@ -1,0 +1,149 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
+import math
+# Generate random sentences as data A
+data_A = [
+    "Hello there!",
+    "How are you doing?",
+    "PyTorch is great.",
+    "Machine learning is fascinating.",
+    "Let's build something amazing.",
+    "Semantic communication matters.",
+    "Understanding context is important.",
+    "AI is changing the world.",
+    "Keep learning and growing.",
+    "Innovation drives progress."
+]
+
+# Tokenize sentences into words
+words = [sentence.split() for sentence in data_A]
+
+# Create a vocabulary
+vocab = list(set(word for sentence in words for word in sentence))
+vocab_size = len(vocab)
+
+# Convert words to unique indices
+word_to_idx = {word: idx for idx, word in enumerate(vocab)}
+idx_to_word = {idx: word for word, idx in word_to_idx.items()}
+
+# Convert sentences to numerical representation
+numerical_sentences = [[word_to_idx[word] for word in sentence] for sentence in words]
+
+
+# Semantic Encoder
+class SemanticEncoder(nn.Module):
+    def __init__(self, vocab_size, embedding_size, hidden_size):
+        super(SemanticEncoder, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, embedding_size)
+        self.lstm = nn.LSTM(embedding_size, hidden_size)
+
+    def forward(self, input_seq):
+        embedded = self.embedding(input_seq)
+        output, (hidden, cell) = self.lstm(embedded)
+        return output
+
+
+# Channel Encoder and Decoder (Simple Identity Mapping)
+class ChannelEncoder(nn.Module):
+    def __init__(self, hidden_size):
+        super(ChannelEncoder, self).__init__()
+        self.identity = nn.Identity()
+
+    def forward(self, input_features):
+        return self.identity(input_features)
+
+
+class ChannelDecoder(nn.Module):
+    def __init__(self, hidden_size):
+        super(ChannelDecoder, self).__init__()
+        self.identity = nn.Identity()
+
+    def forward(self, received_features):
+        return self.identity(received_features)
+
+# Define the physical channel, which is a Gaussian white noise channel with a given SNR
+class PhysicalChannel(nn.Module):
+    def __init__(self, snr):
+        super(PhysicalChannel, self).__init__()
+        self.snr = snr
+
+    def forward(self, x):
+        # x: (batch_size, output_size)
+        noise_power = 10 ** (-self.snr / 10) # Calculate the noise power from the SNR
+        noise = math.sqrt(noise_power) * torch.randn_like(x)  # Generate Gaussian white noise with the same shape as x
+        y = x + noise  # Add noise to the signal
+        return y
+
+# Semantic Decoder
+class SemanticDecoder(nn.Module):
+    def __init__(self, hidden_size, vocab_size):
+        super(SemanticDecoder, self).__init__()
+        self.lstm = nn.LSTM(hidden_size, hidden_size)
+        self.linear = nn.Linear(hidden_size, vocab_size)
+
+    def forward(self, hidden):
+        output, _ = self.lstm(hidden)
+        output = self.linear(output)
+        return output
+
+
+# Instantiate the model components
+embedding_size = 64
+hidden_size = 128
+snr = -10
+
+semantic_encoder = SemanticEncoder(vocab_size, embedding_size, hidden_size)
+channel_encoder = ChannelEncoder(hidden_size)
+channel_decoder = ChannelDecoder(hidden_size)
+semantic_decoder = SemanticDecoder(hidden_size, vocab_size)
+physical_channel = PhysicalChannel(snr)
+
+# Define loss and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(list(semantic_encoder.parameters()) +
+                       list(channel_encoder.parameters()) +
+                       list(channel_decoder.parameters()) +
+                       list(semantic_decoder.parameters()), lr=0.001)
+
+# Train the model
+num_epochs = 100
+for epoch in range(num_epochs):
+    total_loss = 0.0
+    for sentence in numerical_sentences:
+        optimizer.zero_grad()
+        input_seq = torch.tensor(sentence)  # Input: all words except the last
+        target_seq = torch.tensor(sentence)  # Target: all words except the first
+        semantic_feature = semantic_encoder(input_seq)
+        encoded_features = channel_encoder(semantic_feature)
+        # Simulate the channel (add noise)
+        received_features = physical_channel(encoded_features) #+ torch.randn_like(encoded_features) * 0.1
+
+        decoded_features = channel_decoder(received_features)
+        output = semantic_decoder(decoded_features)
+
+        loss = criterion(output, target_seq)
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+
+    if (epoch + 1) % 10 == 0:
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {total_loss:.4f}')
+
+# Test the semantic communication model
+for i,sentence in enumerate(numerical_sentences):
+    test_input = torch.tensor(sentence)
+    with torch.no_grad():
+        semantic_feature = semantic_encoder(test_input)
+        encoded_features = channel_encoder(semantic_feature)
+        # Simulate the channel (add noise)
+        received_features = encoded_features + torch.randn_like(encoded_features) * 0.1
+        decoded_features = channel_decoder(received_features)
+        output = semantic_decoder(decoded_features)
+        predicted_indices = torch.argmax(output, dim=1).numpy()
+        predicted_sentence = ' '.join([idx_to_word[idx] for idx in predicted_indices])
+
+        print("Original Sentence:", data_A[i])
+        print("Predicted Sentence:", predicted_sentence)
