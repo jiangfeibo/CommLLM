@@ -1,6 +1,6 @@
 # Large Language Model Enhanced Multi-Agent Systems for 6G Communications
 ## Authors
-### Feibo Jiang, Li Dong, Yubo Peng, Kezhi Wang, Kun Yang, Cunhua Pan, Xiaohu You
+### Feibo Jiang, Yubo Peng, Li Dong, Kezhi Wang, Kun Yang, Cunhua Pan, Dusit Niyato, and Octavia A. Dobre.
 ## Paper
 ### https://arxiv.org/abs/2312.07850
 ## Code
