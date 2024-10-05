@@ -22,11 +22,12 @@ The rapid development of the large language model (LLM) presents huge opportunit
 
 ## Citation   
 ```
-@article{jiang2023large,
-  title={Large language model enhanced multi-agent systems for 6G communications},
-  author={Jiang, Feibo and Dong, Li and Peng, Yubo and Wang, Kezhi and Yang, Kun and Pan, Cunhua and Niyato, Dusit and Dobre, Octavia A},
-  journal={arXiv preprint arXiv:2312.07850},
-  year={2023}
+@article{jiang2024large,
+  title={Large AI model empowered multimodal semantic communications},
+  author={Jiang, Feibo and Dong, Li and Peng, Yubo and Wang, Kezhi and Yang, Kun and Pan, Cunhua and You, Xiaohu},
+  journal={IEEE Communications Magazine},
+  year={2024},
+  publisher={IEEE}
 }
 ```
 
